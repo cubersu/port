@@ -39,8 +39,7 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          sdk-version: '34'
-          build-tools-version: '34.0.0'
+          packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
 
       - name: Cache Gradle packages
         uses: actions/cache@v4
@@ -54,7 +53,6 @@ jobs:
 
       - name: Build APK
         run: |
-          cd app
           ./gradlew assembleRelease \
             -Pandroid.testOptions.unitTests.enabled=false \
             -Pkotlin.code.style=official \
@@ -89,8 +87,7 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          sdk-version: '34'
-          build-tools-version: '34.0.0'
+          packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
 
       - name: Cache Gradle packages
         uses: actions/cache@v4
@@ -104,7 +101,6 @@ jobs:
 
       - name: Build AAB
         run: |
-          cd app
           ./gradlew bundleRelease \
             -Pandroid.testOptions.unitTests.enabled=false \
             -Pkotlin.code.style=official \
@@ -118,7 +114,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: port-aab
-          path: app/build/outputs/bundle/release/port-release.aab
+          path: app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
 
   create-release:
