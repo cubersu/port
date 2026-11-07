@@ -11,9 +11,11 @@ data class PortEntity(
     val state: PortState = PortState.CLOSED,
     val osInfo: String? = null,
     val manufacturer: String? = null,
-    val deviceType: String? = null
+    val deviceType: String? = null,
+    val banner: String? = null
 )
 
+@Serializable
 enum class PortState {
     OPEN, CLOSED, FILTERED, UNREACHABLE
 }

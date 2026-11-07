@@ -54,7 +54,6 @@ jobs:
 
       - name: Build APK
         run: |
-          cd app
           ./gradlew assembleRelease \
             -Pandroid.testOptions.unitTests.enabled=false \
             -Pkotlin.code.style=official \
@@ -104,7 +103,6 @@ jobs:
 
       - name: Build AAB
         run: |
-          cd app
           ./gradlew bundleRelease \
             -Pandroid.testOptions.unitTests.enabled=false \
             -Pkotlin.code.style=official \
@@ -118,7 +116,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: port-aab
-          path: app/build/outputs/bundle/release/port-release.aab
+          path: app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
 
   create-release:

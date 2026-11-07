@@ -1,18 +1,9 @@
-package com.example.port
+package com.example.port.di
 
-import com.example.port.domain.repository.PortRepository
 import com.example.port.data.repository.DefaultPortRepository
-import dagger.Module
-import dagger.Provides
-import dagger.Scope
+import com.example.port.domain.repository.PortRepository
 
-@Scope
-@Module
-abstract class PortModule {
-    @Provides
-    @Scope
-    abstract fun providesPortRepository(): PortRepository
-    
-    @Provides
-    fun provideDefaultPortRepository(): PortRepository = DefaultPortRepository()
+/** Basit, elle yazılmış bağımlılık sağlayıcı. */
+object PortModule {
+    val portRepository: PortRepository by lazy { DefaultPortRepository() }
 }
