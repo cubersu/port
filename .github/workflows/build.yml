@@ -39,8 +39,7 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          sdk-version: '34'
-          build-tools-version: '34.0.0'
+          packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
 
       - name: Cache Gradle packages
         uses: actions/cache@v4
@@ -88,8 +87,7 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          sdk-version: '34'
-          build-tools-version: '34.0.0'
+          packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
 
       - name: Cache Gradle packages
         uses: actions/cache@v4
