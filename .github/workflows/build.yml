@@ -1,0 +1,171 @@
+name: Build APK
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build'
+        default: 'main'
+        required: true
+        type: choice
+        options:
+          - main
+          - develop
+
+env:
+  APPLICATION_ID: com.example.port
+  GROUP: com.example
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          sdk-version: '34'
+          build-tools-version: '34.0.0'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/build.gradle.kts') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle
+
+      - name: Build APK
+        run: |
+          cd app
+          ./gradlew assembleRelease \
+            -Pandroid.testOptions.unitTests.enabled=false \
+            -Pkotlin.code.style=official \
+            -Porg.gradle.daemon=true \
+            -Porg.gradle.parallel=true \
+            -Porg.gradle.caching=true \
+            -Porg.gradle.workers.max=2 \
+            --warning-mode=all
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: port-apk
+          path: app/build/outputs/apk/release/app-release.apk
+          retention-days: 30
+
+  build-aab:
+    runs-on: ubuntu-latest
+    needs: build-apk
+    if: always()
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          sdk-version: '34'
+          build-tools-version: '34.0.0'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/build.gradle.kts') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle
+
+      - name: Build AAB
+        run: |
+          cd app
+          ./gradlew bundleRelease \
+            -Pandroid.testOptions.unitTests.enabled=false \
+            -Pkotlin.code.style=official \
+            -Porg.gradle.daemon=true \
+            -Porg.gradle.parallel=true \
+            -Porg.gradle.caching=true \
+            -Porg.gradle.workers.max=2 \
+            --warning-mode=all
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: port-aab
+          path: app/build/outputs/bundle/release/port-release.aab
+          retention-days: 30
+
+  create-release:
+    runs-on: ubuntu-latest
+    needs: [build-apk, build-aab]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download APK
+        uses: actions/download-artifact@v4
+        with:
+          name: port-apk
+          path: apk
+
+      - name: Download AAB
+        uses: actions/download-artifact@v4
+        with:
+          name: port-aab
+          path: aab
+
+      - name: Create Release Tag
+        run: |
+          VERSION=$(cat VERSION 2>/dev/null || echo "1.0.0")
+          TAG_NAME="release-$VERSION"
+          git tag -a "$TAG_NAME" -m "Release version $VERSION"
+          git push origin "$TAG_NAME"
+
+      - name: Upload Release Assets
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_tag.outputs.upload_url }}
+          asset_path: apk/app-release.apk
+          asset_name: port-release.apk
+          asset_content_type: application/vnd.android.package-archive
+          asset_file_name: port-release.apk
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Upload Release AAB
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_tag.outputs.upload_url }}
+          asset_path: aab/port-release.aab
+          asset_name: port-release.aab
+          asset_content_type: application/vnd.android.vending.install-tracker
+          asset_file_name: port-release.aab
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
